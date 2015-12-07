@@ -40,8 +40,8 @@ valid_labels = {'n.act': 0,
     'v.possession': 37,
     'v.social': 38,
     'v.stative': 39,
-    'v.weather': 40}
-
+    'v.weather': 40
+}
 valid_labels_rev = { v:k for k,v in valid_labels.iteritems() }
 
 class BIO:
@@ -52,24 +52,18 @@ class BIO:
         if bio != 'O' and bio != 'B' and bio != 'I':
             raise TypeError
         self.bio = bio
-        
-        #self.label = None   # the label will only be needed for supersenses
-        self.label = '-1' # for empty supersense i.e neither verb nor noun
-        #print valid_labels
-        #print label
-        #print valid_labels[label]
-        if label!= '':
-            #print valid_labels[label]
-            if valid_labels[label]!=None:
-                self.label = valid_labels[label]
-        
-        self.numeric_label = 1 
+        self.label = ''   # the label will only be needed for supersenses
+        #check if the above command is correct
+        self.numeric_label = 1
         if self.bio == 'B':
             self.numeric_label = 2 
         elif self.bio == 'I':
-            self.numeric_label = 3 
-        
-
+            self.numeric_label = 3
+        if label != '' and label != None:
+            #print valid_labels[label]
+            if valid_labels[label] != None:
+                self.label = label
+                self.numeric_label = self.numeric_label*100 + valid_labels[label]
 
     # a.can_follow(b) returns true if:
     #    a is O and b is I or O or
@@ -84,15 +78,24 @@ class BIO:
     # come next. 
     def valid_next(self):
         valid = [] #TODO
-        a = BIO('B')
-        if(a.can_follow(self)):
-            valid.append(a)
-        a = BIO('I')
-        if(a.can_follow(self)):
-            valid.append(a)
-        a = BIO('O')
-        if(a.can_follow(self)):
-            valid.append(a)
+        if(self.bio=='O'):
+            #print 100
+            valid.append(BIO('O'))
+            for k,v in valid_labels.iteritems():
+                valid.append(BIO('B',k))
+            for k,v in valid_labels.iteritems():
+                valid.append(BIO('O',k))
+        elif(self.bio=='B'):
+            #print 200
+            valid.append(BIO('I'))
+        else:
+            #print 300
+            valid.append(BIO('O'))
+            for k,v in valid_labels.iteritems():
+                valid.append(BIO('B',k))
+            for k,v in valid_labels.iteritems():
+                valid.append(BIO('O',k))
+            valid.append(BIO('I'))
         return valid 
 
     # produce a human-readable string
@@ -109,12 +112,19 @@ class BIO:
 def numeric_label_to_BIO(num):
     if not isinstance(num, int):
         raise TypeError
-    if num == 1:
-        return BIO('O')
-    elif num == 2:
-        return BIO('B')
-    elif num == 3:
-        return BIO('I')
+    label=''
+    bio=num
+    if num>=100:
+        label = num%100
+        label = valid_labels_rev[label]
+        bio = int(num/100)
+    if bio == 1:
+        return BIO('O',label)
+    elif bio == 2:
+        return BIO('B',label)
+    elif bio == 3:
+        return BIO('I',label)
+
 
 # given a previous PREDICTED label (prev), which may be incorrect; and
 # the current TRUE label (truth), generate a list of valid reference
@@ -123,9 +133,18 @@ def numeric_label_to_BIO(num):
 # is [truth]. the most important thing is to handle the case when, for
 # instance, truth is I but prev is neither I nor B
 def compute_reference(prev, truth):
-    if prev.bio!='B' and truth.bio=='I':
-        return BIO('O',truth.label)
-    else: return [ truth ]  # TODO
+    #if prev.bio=='B':
+    #    return [BIO('I')]
+    #elif prev.bio == 'O':
+
+    if truth.bio!='I':
+        return [truth]
+    elif truth.bio=='I':
+        if prev.bio!='O':
+            return [ truth ]  # TODO
+        elif prev.bio=='O':
+            return [truth]
+            # if I return BIO('O',label). What will be the label.
 
         
 class MWE(pyvw.SearchTask):
@@ -140,7 +159,7 @@ class MWE(pyvw.SearchTask):
 
     def _run(self, sentence):
         output = []
-        prev   = BIO('O') #keep the first supersense to None   # store the previous prediction
+        prev   = BIO('O')   # store the previous prediction
         for n in range(len(sentence)):
             # label is a BIO, word is a string and pos is a string
             label,word,lemma,pos = sentence[n]
@@ -148,10 +167,14 @@ class MWE(pyvw.SearchTask):
             with self.make_example(word, lemma, pos) as ex:  # construct the VW example
                 # first, compute the numeric labels for all valid reference actions
                 refs  = [ bio.numeric_label for bio in compute_reference(prev, label) ]
-                #supersenseRefs = [bio.label for bio in compute_reference(prev, label) ]
+                #print "refs"
+                #print refs
                 # next, because some actions are invalid based on the
                 # previous decision, we need to compute a list of
                 # valid actions available at this point
+                #print prev
+                #print prev.valid_next()
+                #print prev.label
                 valid = [ bio.numeric_label for bio in prev.valid_next() ]
                 # make a prediction
                 pred  = self.sch.predict(examples   = ex,
@@ -159,72 +182,11 @@ class MWE(pyvw.SearchTask):
                                          oracle     = refs,
                                          condition  = [(n, 'p'), (n-1, 'q')],
                                          allowed    = valid)
-                #supersensePred = self.sch.predict(examples   = ex,
-                #                         my_tag     = n+1,
-                #                         oracle     = supersenseRefs,
-                #                         condition  = [(n, 'p'), (n-1, 'q')])
-                                         #allowed    = valid)
                 # map that prediction back to a BIO label
-
                 this  = numeric_label_to_BIO(pred)
-                #if supersensePred!='':
-                #    this.label = valid_labels_rev[supersensePred]
-                # append it to output
-                output.append(this)
-                # update the 'previous' prediction to the current
-                prev  = this
-
-        # return the list of predictions as BIO labels
-        return output
-
-    def make_example(self, word, lemma, pos):
-        return self.example({
-            'w': [word],
-            'l': [lemma],
-            'p': [pos],
-        })
-
-class supersenseFn(pyvw.SearchTask):
-    def __init__(self, vw, sch, num_actions):
-        # you must must must initialize the parent class
-        # this will automatically store self.sch <- sch, self.vw <- vw
-        pyvw.SearchTask.__init__(self, vw, sch, num_actions)
-        
-        # for now we will use AUTO_HAMMING_LOSS; in Part II, you should remove this and implement a more task-focused loss
-        # like one-minus-F-measure.
-        sch.set_options( sch.AUTO_HAMMING_LOSS | sch.AUTO_CONDITION_FEATURES )
-
-    def _run(self, sentence):
-        output = []
-        prev   = BIO('O') #keep the first supersense to None   # store the previous prediction
-        for n in range(len(sentence)):
-            # label is a BIO, word is a string and pos is a string
-            label,word,lemma,pos = sentence[n]
-
-            with self.make_example(word, lemma, pos) as ex:  # construct the VW example
-                # first, compute the numeric labels for all valid reference actions
-                #refs  = [ bio.numeric_label for bio in compute_reference(prev, label) ]
-                supersenseRefs = [bio.label for bio in compute_reference(prev, label) ]
-                # next, because some actions are invalid based on the
-                # previous decision, we need to compute a list of
-                # valid actions available at this point
-                valid = [ bio.numeric_label for bio in prev.valid_next() ]
-                # make a prediction
-                #pred  = self.sch.predict(examples   = ex,
-                #                         my_tag     = n+1,
-                #                         oracle     = refs,
-                #                         condition  = [(n, 'p'), (n-1, 'q')],
-                #                         allowed    = valid)
-                supersensePred = self.sch.predict(examples   = ex,
-                                         my_tag     = n+1,
-                                         oracle     = supersenseRefs,
-                                         condition  = [(n, 'p'), (n-1, 'q')])
-                                         #allowed    = valid)
-                # map that prediction back to a BIO label
-
-                #this  = numeric_label_to_BIO(pred)
-                if supersensePred!='':
-                    this.label = valid_labels_rev[supersensePred]
+                #print "pred"
+                #print pred
+                #print this
                 # append it to output
                 output.append(this)
                 # update the 'previous' prediction to the current
@@ -266,19 +228,14 @@ if __name__ == "__main__":
 
     # read in some examples to be used as training/dev set
     train_data = make_data(BIO,trainfilename)
-    print 1
 
     # initialize VW and sequence labeler as learning to search
     vw = pyvw.vw(search=3, quiet=True, search_task='hook', ring_size=1024, \
                  search_rollin='learn', search_rollout='none')
-    supersenseVW = pyvw.vw(search=3, quiet=True, search_task='hook', ring_size=1024, \
-                 search_rollin='learn', search_rollout='none')
-    
 
     # tell VW to construct your search task object
     sequenceLabeler = vw.init_search_task(MWE)
-    supersenseLabeler = supersenseVW.init_search_task(supersenseFn)
-    print 2
+
     # train!
     # we make 5 passes over the training data, training on the first 80%
     # examples (we retain the last 20% as development data)
@@ -287,13 +244,12 @@ if __name__ == "__main__":
     for i in xrange(5):
         print 'iteration ', i, ' ...'
         sequenceLabeler.learn(train_data[0:N])
-        supersenseLabeler.learn(train_data[0:N])
-    print 3
+        
     # now see the predictions on 20% held-out sentences 
     print 'predicting!' 
     hamming_loss, total_words = 0,0
     for n in range(N, len(train_data)):
-        truth = [BIO(label.bio) for label,word,lemma,pos in train_data[n]]
+        truth = [label for label,word,lemma,pos in train_data[n]]
         pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for label,word,lemma,pos in train_data[n]] )
         for i,t in enumerate(truth):
             if t != pred[i]:
@@ -302,7 +258,6 @@ if __name__ == "__main__":
     #    print 'predicted:', '\t'.join(map(str, pred))
     #    print '    truth:', '\t'.join(map(str, truth))
     #    print ''
-    print 4
     print 'total hamming loss on dev set:', hamming_loss, '/', total_words
 
     # In Part II, you will have to output predictions on the test set.
