@@ -66,7 +66,7 @@ mwe_verbs = file_2_phrases('verbs_mwes_in_wordnet3.1.txt')
 mwes = mwe_nouns | mwe_verbs
 mapping_nouns = file_2_mappings('nouns_mwes_in_wordnet3.1.txt')
 mapping_verbs = file_2_mappings('verbs_mwes_in_wordnet3.1.txt')
-print "done loading %d nouns and %s verbs" % (len(mwe_nouns), len(mwe_verbs))
+print "done loading %d noun and %s verb MWEs" % (len(mwe_nouns), len(mwe_verbs))
 print "%d entries for nouns and %d for verbs in mappings" % (len(mapping_nouns), len(mapping_verbs))
 
 class BIO:
@@ -204,10 +204,10 @@ class MWE(pyvw.SearchTask):
             label,word,lemma,pos = sentence[n]
 
             # see how many time the noun/verb appears in a MWE
-            extra = {
-                "NOUN": len(mapping_nouns.get(word, ())),
-                "VERB": len(mapping_verbs.get(word, ()))
-            }.get(pos, 0)
+            #extra = {
+            #    "NOUN": len(mapping_nouns.get(word, ())),
+            #    "VERB": len(mapping_verbs.get(word, ()))
+            #}.get(pos, 0)
 
             # check for POS of previous and next words
             poses = [sentence[i][2] for i in [n-1,n,n+1] if 0 <= i < len(sentence)]
@@ -256,9 +256,6 @@ class MWE(pyvw.SearchTask):
 
         # return the list of predictions as BIO labels
         return output
-
-    def make_example(self, word, lemma, pos, extra, poses, capitalized, start_mwe):
-        return 
 
 
 def make_data(BIO,filename):
