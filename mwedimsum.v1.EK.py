@@ -222,9 +222,8 @@ class MWE(pyvw.SearchTask):
         # look ahead and check for exact MWE match of lengths [2..9]
         def mwe_test():
             for l in range(2, 1 + min(9, len(sentence) - n)):
-                w1 = tuple([sentence[i][1] for i in range(n, n + l)])
-                w2 = tuple([sentence[i][2] for i in range(n, n + l)])
-                if w1 in mwes or w2 in mwes: return True
+                w = tuple([sentence[i][2] for i in range(n, n + l)])
+                if w in mwes: return True
             return False
 
         feats['m'] = [mwe_test()]
