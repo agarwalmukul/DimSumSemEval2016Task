@@ -53,7 +53,7 @@ valid_labels_rev = { v:k for k,v in valid_labels.iteritems() }
 
 class BIO:
     # construct a BIO object using a bio type ('O', 'B' or 'I') and a
-    # optionally a label (that can be used to capture the supersense tag).
+    # optionally a label (that can be used to capture the supersense tag). 
     # this additionally computes a numeric_label to be used by vw
     def __init__(self, bio, label=None, pos=None, word=None):
         bio_valid = ['B']
@@ -62,34 +62,32 @@ class BIO:
         self.bio = bio
         self.label = label          # the label will only be needed for supersenses
         self.numeric_label = 1
-        if self.label == None or self.label=='':
+        if self.label == None or self.label == '': 
             if self.bio == 'B':
-                self.numeric_label = 2
+                self.numeric_label = 2 
             elif self.bio == 'I':
-                self.numeric_label = 3
+                self.numeric_label = 3 
             elif self.bio =='b':
                 self.numeric_label = 4
-            elif self.bio == 'i':
+            elif self.bio == 'i': 
                 self.numeric_label = 5
-            elif self.bio == 'o':
+            elif self.bio == 'o': 
                 self.numeric_label = 6
         else:    #adding supersenses and supersense bio combos
-            if self.bio == 'O':
-                #print 'key'
-                #print self.label
-                self.numeric_label = int(valid_labels[self.label]) + 100
-            if self.bio == 'B':
-                self.numeric_label = valid_labels[self.label] + 200
+            if self.bio == 'O': 
+                self.numeric_label = valid_labels[self.label] + 100
+            if self.bio == 'B': 
+                self.numeric_label = valid_labels[self.label] + 200  
             elif self.bio == 'I':
                 self.numeric_label = valid_labels[self.label] + 300
-            elif self.bio == 'o':
-                self.numeric_label = valid_labels[self.label] + 400
-            elif self.bio == 'b':
-                self.numeric_label = valid_labels[self.label] + 500
-            else:
-                self.numeric_label = valid_labels[self.label] + 600
-
-
+            elif self.bio == 'o': 
+                self.numeric_label = valid_labels[self.label] + 400 
+            elif self.bio == 'b': 
+                self.numeric_label = valid_labels[self.label] + 500  
+            else: 
+                self.numeric_label = valid_labels[self.label] + 600  
+            
+                   
     # a.can_follow(b) returns true if:
     #    a is O and b is I or O or
     #    a is B and b is I or O or
@@ -98,95 +96,91 @@ class BIO:
         cond =  (
            (self.bio == 'O' and (prev.bio == 'I' or prev.bio == 'O') ) or \
            (self.bio == 'B' and (prev.bio == 'I' or prev.bio == 'O') ) or \
-           (self.bio == 'I' and (prev.bio == 'B' or prev.bio == 'I') ) )
+           (self.bio == 'I' and (prev.bio == 'B' or prev.bio == 'I') ) ) 
         return cond
-
+            
     # given a label, produce a list of all valid BIO items that can
-    # come next.
-    def valid_next(self, task=None):
-        valid = []
+    # come next. 
+    def valid_next(self, task=None):    
+         valid = []
 
-        #if task == "MWE":
-
-        if task == "MWE-SS":
-            if self.bio == 'B':
-              valid.append(BIO('I', label=None))
-            if self.bio == 'I':
-              valid.append(BIO('O', label=None))
-              valid.append(BIO('I', label=None))
-              valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
-              for i in valid_labels:
-                valid.append(BIO('B', label=i))
-                valid.append(BIO('O', label=i))
-            if self.bio == 'O':
-              valid.append(BIO('O', label=None))
-              valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
-              for i in valid_labels:
-                valid.append(BIO('B', label=i))
-                valid.append(BIO('O', label=i))
-
-        if task == "MWE-GAPPY":
-            if self.bio == 'B':
-              valid.append(BIO('I', label=None))
-            if self.bio == 'I':
-              valid.append(BIO('O', label=None))
-              valid.append(BIO('I', label=None))
-              valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
-              for i in valid_labels:
-                valid.append(BIO('B', label=i))
-                valid.append(BIO('O', label=i))
-            if self.bio == 'O':
-              valid.append(BIO('O', label=None))
-              valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
-              for i in valid_labels:
-                valid.append(BIO('B', label=i))
-                valid.append(BIO('O', label=i))
-            if self.bio == 'b':
-                valid.append(BIO('i', label=None))
-            if self.bio == 'i':
-                valid.append(BIO('I', label=None))
-                valid.append(BIO('o', label=None))
-                valid.append(BIO('i', label=None))
-                for i in valid_labels:
-                  valid.append(BIO('o', label=i))
-            if self.bio == 'o':
-                valid.append(BIO('I', label=None))
-                valid.append(BIO('o', label=None))
-                valid.append(BIO('i', label=None))
-                valid.append(BIO('b', label=None))
-                for i in valid_labels:
-                  valid.append(BIO('b', label=i))
-                  valid.append(BIO('o', label=i))
-
-        return valid
+        
+         if task == "MWE-SS": 
+           if self.bio == 'B': 
+             valid.append(BIO('I', label=None))
+           if self.bio == 'I':
+             valid.append(BIO('O', label=None)) 
+             valid.append(BIO('I', label=None)) 
+             valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
+             for i in valid_labels:
+               valid.append(BIO('B', label=i))
+               valid.append(BIO('O', label=i))
+           if self.bio == 'O': 
+             valid.append(BIO('O', label=None)) 
+             valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
+             for i in valid_labels: 
+               valid.append(BIO('B', label=i))
+               valid.append(BIO('O', label=i)) 
+         if task == "MWE-GAPPY":
+           if self.bio == 'B':
+             valid.append(BIO('I', label=None))   
+           if self.bio == 'I':
+             valid.append(BIO('O', label=None)) 
+             valid.append(BIO('I', label=None)) 
+             valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
+             for i in valid_labels: 
+               valid.append(BIO('B', label=i))
+               valid.append(BIO('O', label=i))
+           if self.bio == 'O': 
+             valid.append(BIO('O', label=None)) 
+             valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
+             for i in valid_labels: 
+               valid.append(BIO('B', label=i))
+               valid.append(BIO('O', label=i))
+           if self.bio == 'b': 
+             valid.append(BIO('i', label=None)) 
+           if self.bio == 'i':
+             valid.append(BIO('I', label=None)) 
+             valid.append(BIO('o', label=None)) 
+             valid.append(BIO('i', label=None)) 
+             for i in valid_labels: 
+               valid.append(BIO('o', label=i))
+           if self.bio == 'o': 
+             valid.append(BIO('I', label=None)) 
+             valid.append(BIO('o', label=None)) 
+             valid.append(BIO('i', label=None)) 
+             valid.append(BIO('b', label=None)) 
+             for i in valid_labels: 
+               valid.append(BIO('b', label=i))
+               valid.append(BIO('o', label=i))
+         return valid
 
     # produce a human-readable string
     def __str__( self): return self.bio #return 'O' if self.bio == 'O' else (self.bio + '-' + self.label)
     def __repr__(self): return self.__str__()
-
 
     # compute equality
     def __eq__(self, other):
         if not isinstance(other, BIO): return False
         return self.bio == other.bio and self.label == other.label
     def __ne__(self, other): return not self.__eq__(other)
-
+        
 # convert a numerical prediction back to a BIO label
-def numeric_label_to_BIO(num):
+def numeric_label_to_BIO(num):  
     if not isinstance(num, int):
         raise TypeError
-    if num < 100:
+    if num < 100: 
         if num == 1:
             return BIO('O')
         elif num == 2:
             return BIO('B')
         elif num == 3:
             return BIO('I')
-        elif num == 4:
+        elif num == 4: 
             return BIO('b')
-        elif num == 5:
+        elif num == 5: 
             return BIO('i')
-        elif num == 6:
+        elif num == 6: 
             return BIO('o')
     elif num < 200: # O
         ss = valid_labels_rev[num - 100]
@@ -207,119 +201,114 @@ def numeric_label_to_BIO(num):
         ss = valid_labels_rev[num - 600]
         return BIO('o', ss)
 
-
+        
 # given a previous PREDICTED label (prev), which may be incorrect; and
 # the current TRUE label (truth), generate a list of valid reference
 # actions. the return type should be [BIO]. for example, if the truth
 # is O or B, then regardless of what prev is the correct thing to do
 # is [truth]. the most important thing is to handle the case when, for
 # instance, truth is I but prev is neither I nor B
-def compute_reference(prev, truth, task=None):
+def compute_reference(prev, truth, task=None): 
     ref = []
-    if task == "MWE":
+    if task == "MWE": 
         if (truth.bio == 'I' and prev.bio == 'O'):
           ref = [prev]
-        else:
+        else: 
           ref = [truth]
-
-    elif task == "MWE-SS":
-
+     
+    elif task == "MWE-SS": 
+        
         if (truth.bio == 'O' or truth.bio == 'B'):
             ref.append(BIO(truth.bio, label=truth.label))
         elif (truth.bio == 'I' and prev.bio == 'O'):
             ref.append(BIO('O', label=None))
         else:
             ref.append(BIO(truth.bio, label=None))
-
+         
     elif task == "MWE-GAPPY":
-
+        
         # TODO: make decision on how to handle wrong predictions...
         if (truth.bio == 'I' and prev.bio == 'O'):      # OI
             ref.append(BIO('O', label=None))
-
+        
         elif (truth.bio == 'B' and prev.bio == 'b'):    # bB
             ref.append(BIO(truth.bio, label=truth.label))
-
+        
         elif (truth.bio == 'B' and prev.bio == 'o'):    # oB
             ref.append(BIO(truth.bio, label=truth.label))
-
+        
         elif (truth.bio == 'B' and prev.bio == 'i'):    # iB
             ref.append(BIO(truth.bio, label=truth.label))
-
+        
         elif (truth.bio == 'I' and prev.bio == 'b'):    # bI
             ref.append(BIO(truth.bio, label=None))
-
-        elif (truth.bio == 'O' and prev.bio == 'B'):    # BO
+        
+        elif (truth.bio == 'O' and prev.bio == 'B'):    # BO 
             ref.append(BIO(truth.bio, label=truth.label))
-
-        elif (truth.bio == 'O' and prev.bio == 'b'):
+        
+        elif (truth.bio == 'O' and prev.bio == 'b'): 
             ref.append(BIO(truth.bio, label=truth.label))
-
-        elif (truth.bio == 'O' and prev.bio == 'i'):
+        
+        elif (truth.bio == 'O' and prev.bio == 'i'): 
             ref.append(BIO(truth.bio, label=truth.label))
-
-        elif (truth.bio == 'O' and prev.bio == 'o'):
+        
+        elif (truth.bio == 'O' and prev.bio == 'o'): 
             ref.append(BIO(truth.bio, label=truth.label))
-
-        elif (truth.bio == 'b' and prev.bio == 'B'):
+        
+        elif (truth.bio == 'b' and prev.bio == 'B'): 
             ref.append(BIO(truth.bio, label=truth.label))
-
-        elif (truth.bio == 'b' and prev.bio == 'O'):
+        
+        elif (truth.bio == 'b' and prev.bio == 'O'): 
             ref.append(BIO(truth.bio, label=truth.label))
-
-        elif (truth.bio == 'i' and prev.bio == 'O'):
+        
+        elif (truth.bio == 'i' and prev.bio == 'O'): 
             ref.append(BIO(truth.bio, label=None))
-
-        elif (truth.bio == 'i' and prev.bio == 'B'):
+        
+        elif (truth.bio == 'i' and prev.bio == 'B'): 
             ref.append(BIO(truth.bio, label=None))
-
-        elif (truth.bio == 'i' and prev.bio == 'I'):
+        
+        elif (truth.bio == 'i' and prev.bio == 'I'): 
             ref.append(BIO(truth.bio, label=None))
-
-        elif (truth.bio == 'o' and prev.bio == 'O'):
+        
+        elif (truth.bio == 'o' and prev.bio == 'O'): 
             ref.append(BIO(truth.bio, label=truth.label))
-
-        # assuming all invalid prev. pred are handled above...
-        elif (truth.bio == 'O' or truth.bio == 'B' or truth.bio == 'o' or truth.bio == 'b'):
+        
+        # assuming all invalid prev. pred are handled above...  
+        elif (truth.bio == 'O' or truth.bio == 'B' or truth.bio == 'o' or truth.bio == 'b'): 
             ref.append(BIO(truth.bio, label=truth.label))
-        elif (truth.bio == 'I'):
+        elif (truth.bio == 'I'): 
             ref.append(BIO(truth.bio, label=None))
-
+          
     return ref
 
 
-
+    
 class MWE(pyvw.SearchTask):
     def __init__(self, vw, sch, num_actions):
         # you must must must initialize the parent class
         # this will automatically store self.sch <- sch, self.vw <- vw
         pyvw.SearchTask.__init__(self, vw, sch, num_actions)
-        sch.set_options( sch.AUTO_HAMMING_LOSS)
         # sch.set_options( sch.AUTO_CONDITION_FEATURES| sch.IS_LDF )
 
     def _run(self, sentence):
-        def f1(confusion):
+        def f1(conf): 
            f = 0.
-           #print confusion
-           for label in confusion:
-               #print confusion[label]
-               label=confusion[label]
-               prec = label["tp"]/(label["tp"] + label["fn"])   #TODO: double check this
-               rec = label["tp"]/(label["tp"] + label["fp"])
+           for counts in conf:
+               prec = counts["tp"]/(counts["tp"] + counts["fn"])   if counts["tp"] + counts["fn"]>0 else float('nan')
+               rec = counts["tp"]/(counts["tp"] + counts["fp"]) if counts["tp"] + counts["fp"]>0 else float('nan')
                f += 2*prec*rec/(prec+rec) if prec+rec>0 else float('nan')
            return f
 
 
         output = []
         loss = 0.
-        confusion = defaultdict(lambda:None,{})
-        #print confusion
+        confusion = defaultdict(lambda:None)       
         prev = BIO('O')   # store the previous prediction
         for n in range(len(sentence)):
             with self.make_example(sentence, n) as ex:  # construct the VW example
-                label,w,lemma,pos = sentence[n]
+                label  = sentence[n][0]
                 # first, compute the numeric labels for all valid reference actions
-                refs  = [ bio.numeric_label for bio in compute_reference(prev, label, task="MWE-SS") ]
+                refs  = [ bio.numeric_label for bio in compute_reference(prev, label, task="MWE-SS") ]  
                 # next, because some actions are invalid based on the
                 # previous decision, we need to compute a list of
                 # valid actions available at this point
@@ -329,95 +318,92 @@ class MWE(pyvw.SearchTask):
                                          my_tag     = n+1,
                                          oracle     = refs,
                                          condition  = [(n, 'p'), (n-1, 'q')],
-                                         allowed    = valid)
-
+                                         allowed    = valid)  
+               
+                print pred
+                print refs
+                
                 # map that prediction back to a BIO label
                 this = numeric_label_to_BIO(pred)
-
-                if confusion['pred'] == None:
-                  confusion['pred'] = {"tp": 0., "fp": 0., "fn": 0.}
-
-                if confusion['valid'] == None:
-                  confusion['valid'] = {"tp": 0., "fp": 0., "fn": 0.}
-
+                
+                if confusion[pred] == None:
+                  confusion[pred] = {"tp": 0., "fp": 0., "fn": 0.}
+             #
+                if refs != [] and confusion[refs[0]] == None:
+                  confusion[refs[0]] = {"tp": 0., "fp": 0., "fn": 0.}
+                
                 # keeping track of tp, fp, and fn for sentence...
-                if valid == pred:
-                    confusion['pred']["tp"] += 1.
-                else:
-                    confusion['pred']["fp"] += 1.
-                    confusion['valid']["fn"] += 1.
-
+                if valid == []:
+                    confusion[pred]["fp"] += 1.
+                elif valid[0] == pred:
+                    confusion[pred]["tp"] += 1.
+                else: 
+                    confusion[pred]["fp"] += 1.
+                    confusion[refs[0]]["fn"] += 1.
+                     
                 # append it to output
                 output.append(this)
-
+                
                 # update the 'previous' prediction to the current
                 prev  = this
-
+ 
         # calculating joint f-measure
-        #loss = 1. - f1(confusion)
-        #self.sch.loss(loss)
-
+        loss = 1. - f1(confusion)   
+        self.sch.loss(loss)  
+                
         # return the list of predictions as BIO labels
         return output
 
 
 
-    # TODO: add features here
+    # TODO: add features here 
     def make_example(self, sentence, n):
-        label,w,lemma,pos = sentence[n]
-        #print sentence[n]
-        #offset,w,lemma,pos,mwe,parent,strength,ssense,sid = sentence[n]
+        lemma = sentence[n][2]
+        pos = sentence[n][3]
+        w = sentence[n][1]
+        
         feats = {
             'w': [w],
             'l': [lemma],
             'p': [pos]
         }
+        
+        # tmp = '<s>'
+        # caps = "t" if (w[0].isupper()) else  "f"
+        # digit = "t" if w.isdigit() else "f"
+        # w_p2 = sentence[n-2][1] if (n-2) >= 0 else tmp
+        # pos_p2 = sentence[n-2][2] if (n-2) >= 0 else tmp
+        # w_p1 = sentence[n-1][1] if (n-1) >= 0 else tmp
+        # pos_p1 = sentence[n-1][2] if (n-1) >= 0 else tmp
+        # w_n1 = sentence[n+1][1] if (n+1) <= len(sentence) else tmp
+        # pos_n1 = sentence[n+1][2] if (n+1) <= len(sentence) else tmp
+        # caps_n1 = "t" if ((n+1) <= len(sentence) and sentence[n+1][1][0].isupper()) else "f"
+        # w_n2 = sentence[n+2][1] if (n+2) <= len(sentence) else tmp
+        # pos_n2 = sentence[n+2][2] if (n+2) <= len(sentence) else tmp
 
-        tmp = '<s>'
-        if str(w[0]).isupper(): caps = "t"
-        else: caps = "f"
-        if str(w).isdigit():digit = "t"
-        else: digit = "f"
-        #print w
-        #print n
-        #print 'n-2'
-        #print n-2
-        w_p2 = sentence[n-2][0] if (n-2) >= 0 else tmp
-        pos_p2 = sentence[n-2][2] if (n-2) >= 0 else tmp
-        w_p1 = sentence[n-1][0] if (n-1) >= 0 else tmp
-        pos_p1 = sentence[n-1][2] if (n-1) >= 0 else tmp
-        w_n1 = sentence[n+1][0] if (n+1) < len(sentence) else tmp
-        pos_n1 = sentence[n+1][2] if (n+1) < len(sentence) else tmp
-        caps_n1 = "t" if ((n+1)<len(sentence) and str(sentence[n+1][0]).isupper()) else "f"
-        #print n+2
-        #print len(sentence)
-        #print sentence[n+2][0]
-        w_n2 = sentence[n+2][0] if (n+2) < len(sentence) else tmp
-        pos_n2 = sentence[n+2][2] if (n+2) < len(sentence) else tmp
-
-
+        
         # wordnet features:  the supersense category of the first WordNet sense of the current word. (WordNet senses are ordered roughly by frequency.)
-
-        # suffixes: ing
-
+        
+        # suffixes: ing 
+        
         # has-supersense
-
-        # listed as mwe in list?
-
-
-        feats['a']= [pos + '_' + pos_n1] # 'p_p+1'
-        feats['b']= [str(pos_p1) + '_' + pos] # 'p-1_p'
-        feats['c']= [str(pos_p1) + '_' + pos + '_' + pos_n1] # 'p-1_p_p+1'
-        feats['d']= [w + '_' + str(w_n1)]  # 'w_w+1'
-        feats['e']= [str(w_p1) + '_' + w]  # 'w-1_w'
-        feats['f']= [str(w_p1) + '_' + w + '_' + str(w_n1)]  # 'w-1_w_w+1'
-        feats['g']= [caps]
-        feats['h']= [caps + '_' + caps_n1]  #'cap_cap+1'
-        feats['j']= [digit]
-
+        
+        # listed as mwe in list? 
+        
+        #
+        # feats['a'] = [pos + '_' + pos_n1] # 'p_p+1'
+        # feats['b'] = [pos_p1 + '_' + pos] # 'p-1_p'
+        # feats['c'] = [pos_p1 + '_' + pos + '_' + pos_n1] # 'p-1_p_p+1'
+        # feats['d'] = [w + '_' + w_n1]  # 'w_w+1'
+        # feats['e'] = [w_p1 + '_' + w]  # 'w-1_w'
+        # feats['f'] = [w_p1 + '_' + w + '_' + w_n1]  # 'w-1_w_w+1'
+        # feats['g'] = [caps]
+        # feats['h'] = [caps + '_' + caps_n1]  #'cap_cap+1'
+        # feats['j'] = [digit]
+        
         return self.example(feats)
 
-
+           
 
 def make_data(BIO,filename):
     data = []
@@ -431,12 +417,13 @@ def make_data(BIO,filename):
             sentence = []
         else:
             [offset,word,lemma,pos,mwe,parent,strength,ssense,sid] = l.split('\t')
-            sentence.append((BIO(mwe,ssense),word,lemma,pos))
+            sentence.append((BIO(mwe, label=ssense),word,lemma,pos))
     return data
 
 
 
 if __name__ == "__main__":
+  
     # input/output files
     trainfilename='dimsum16.p3.train.contiguous'
     testfilename='dimsum16.p3.test.contiguous'
@@ -447,12 +434,12 @@ if __name__ == "__main__":
 
     # initialize VW and sequence labeler as learning to search
     vw = pyvw.vw(search=3, quiet=True, search_task='hook', ring_size=1024, \
-                 search_rollin='learn', search_rollout='none')
-
-    # TODO: For ldf version ....
+                 search_rollin='learn', search_rollout='ref')
+    
+    # TODO: For ldf version ....           
     # vw = pyvw.vw(search=0, csoaa_ldf=m, quiet=True, search_task='hook', ring_size=1024, \
- #               search_rollin='learn', search_rollout='ref')
-
+ #               search_rollin='learn', search_rollout='ref')  
+    
 
     # tell VW to construct your search task object
     sequenceLabeler = vw.init_search_task(MWE)
@@ -465,9 +452,9 @@ if __name__ == "__main__":
     for i in xrange(5):
         print 'iteration ', i, ' ...'
         sequenceLabeler.learn(train_data[0:N])
-
-    # now see the predictions on 20% held-out sentences
-    print 'predicting!'
+        
+    # now see the predictions on 20% held-out sentences 
+    print 'predicting!' 
     hamming_loss, total_words = 0,0
     for n in range(N, len(train_data)):
         truth = [label for label,word,lemma,pos in train_data[n]]
