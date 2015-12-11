@@ -54,16 +54,16 @@ def file_2_mappings(filename):
     mappings = dict()
     with open(filename) as f:
         for l in f:
-            l1 = l.rstrip('\n')
-            tokens = tuple(l1.split('_'))
+            tokens = tuple(l.rstrip('\n').split('_'))
             for token in tokens:
                 s = mappings.get(token, set())
-                s.add(l1)
+                s.add(tokens)
                 mappings[token] = s
     return mappings
 
 mwe_nouns = file_2_phrases('nouns_mwes_in_wordnet3.1.txt')
 mwe_verbs = file_2_phrases('verbs_mwes_in_wordnet3.1.txt') 
+mwes = mwe_nouns | mwe_verbs
 mapping_nouns = file_2_mappings('nouns_mwes_in_wordnet3.1.txt')
 mapping_verbs = file_2_mappings('verbs_mwes_in_wordnet3.1.txt')
 print "done loading %d nouns and %s verbs" % (len(mwe_nouns), len(mwe_verbs))
@@ -209,7 +209,24 @@ class MWE(pyvw.SearchTask):
                 "VERB": len(mapping_verbs.get(word, ()))
             }.get(pos, 0)
 
-            with self.make_example(word, lemma, pos, extra) as ex:  # construct the VW example
+            # check for POS of previous and next words
+            poses = [sentence[i][2] for i in [n-1,n,n+1] if 0 <= i < len(sentence)]
+
+            # check if word is capitalized
+            #capitalized = word[0].isupper()
+
+            # look ahead and check for exact MWE match of lengths [2..9]
+            def mwe_test():
+                for l in range(2, 1 + min(9, len(sentence) - n)):
+                    w = tuple([sentence[i][1] for i in range(n, n + l)])
+                    if w in mwes: return True
+                return False
+
+            with self.example({
+                    'l': [lemma],
+                    'p': [pos],
+                    'ps': poses,
+                    'mwe': [mwe_test()]}) as ex:  # construct the VW example
                 # first, compute the numeric labels for all valid reference actions
                 refs  = [ bio.numeric_label for bio in compute_reference(prev, label) ]
                 #print "refs"
@@ -240,13 +257,8 @@ class MWE(pyvw.SearchTask):
         # return the list of predictions as BIO labels
         return output
 
-    def make_example(self, word, lemma, pos, extra):
-        return self.example({
-            'w': [word],
-            'l': [lemma],
-            'p': [pos],
-            'e': [extra]
-        })
+    def make_example(self, word, lemma, pos, extra, poses, capitalized, start_mwe):
+        return 
 
 
 def make_data(BIO,filename):
