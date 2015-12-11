@@ -283,6 +283,10 @@ class MWE(pyvw.SearchTask):
         lemma = sentence[n][2]
         pos = sentence[n][3]
         w = sentence[n][1]
+        label = str(sentence[n][0]) if sentence[n][0]!=Null
+        parent = str(sentence[n][5]) if sentence[n][5]!=Null
+        #print label
+        #print parent
         
         feats = {
              'w': [w],
@@ -305,11 +309,15 @@ class MWE(pyvw.SearchTask):
           feats['w'].append(sentence[n+1][1] + '_' + w)
           feats['l'].append(sentence[n+1][2] + '_' + lemma)
           if(n+2) < len(sentence):
-            feats['p'].append(pos + '_' + sentence[n+1][3] + '_' + sentence[n+2][3] + '_' + pos)
-            feats['w'].append(w + '_'+ sentence[n+1][1]  + '_' + sentence[n+2][1] + '_' + w)
-            feats['l'].append(lemma + '_' + sentence[n+1][2]  + '_' + sentence[n+2][2] + '_' + lemma)
+            feats['p'].append(pos + '_' + sentence[n+1][3] + '_' + sentence[n+2][3])
+            feats['w'].append(w + '_'+ sentence[n+1][1]  + '_' + sentence[n+2][1])
+            feats['l'].append(lemma + '_' + sentence[n+1][2]  + '_' + sentence[n+2][2])
 
         #distance from parent
+        if(parent!='' and label!=''):
+          #distance = int(parent)- int(label)
+          feats['w'].append( w + '_'  +str(sentence[int(parent)][2]) + '_' +str(sentence[int(parent)][3]) )
+          #feats['w'].append(int(parent)-int(label) + '_' + sentence[int(parent)][2] + '_' +sentence[int(parent)][3] )
    
    
    
