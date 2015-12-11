@@ -1,0 +1,14 @@
+	•	pos of the head of that word
+	•	supersense of the first noun and the first verb in that sentence.
+	•	or supersense of the most/least frequent noun supersense and the most/least frequent verb supersense in that sentence
+	•	pos of the first word in the sentence.
+	•	the first noun in the sentence
+	•	the first verb in the sentence
+	•	supersense of the MWE in the sentence
+	•	pos of the first word of the MWE in the sentence
+	•	every place where we are including supersense we can include POS of that word as well
+	•	selection restriction based approach
+	•	first/most frequent/least frequent noun if the current word is a verb and first verb if the current word is a noun.
+while predicting the features of the most/least frequent supersenses will not be possible to include on the first pass. a solution to this can be to include all the words in the sentence or a 5 word window during predicting and during training use the least/most frequent word in the 5 word window. 
+you can also include all the 5 words during training and give them a weight factor during training on the basis of their frequency. and during predicting include 
+
