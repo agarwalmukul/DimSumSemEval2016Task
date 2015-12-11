@@ -210,7 +210,7 @@ class MWE(pyvw.SearchTask):
             #}.get(pos, 0)
 
             # check for POS of previous and next words
-            poses = [sentence[i][2] for i in [n-1,n,n+1] if 0 <= i < len(sentence)]
+            poses = [sentence[i][3] for i in [n-1,n,n+1] if 0 <= i < len(sentence)]
 
             # check if word is capitalized
             #capitalized = word[0].isupper()
