@@ -1,4 +1,5 @@
 import pyvw
+import sys
 
 from collections import defaultdict
 from nltk.corpus import wordnet as wn
@@ -48,6 +49,8 @@ valid_labels = {
 'v.weather': 40}
 valid_labels_rev = { v:k for k,v in valid_labels.iteritems() }
 
+
+
 # String POS -> String
 # Return the name of the word's supersense, or the word itself if can't find
 def top_hypernym(word, pos):
@@ -72,6 +75,9 @@ mwe_nouns = file_2_phrases('nouns_mwes_in_wordnet3.1.txt')
 mwe_verbs = file_2_phrases('verbs_mwes_in_wordnet3.1.txt') 
 mwes = mwe_nouns | mwe_verbs
 print "done loading %d noun and %s verb MWEs" % (len(mwe_nouns), len(mwe_verbs))
+
+
+
 
 
 class BIO:
@@ -191,15 +197,25 @@ class MWE(pyvw.SearchTask):
         # this will automatically store self.sch <- sch, self.vw <- vw
         pyvw.SearchTask.__init__(self, vw, sch, num_actions)
         sch.set_options( sch.AUTO_CONDITION_FEATURES )
+        
+        # For LDF version: 
         # sch.set_options( sch.AUTO_CONDITION_FEATURES| sch.IS_LDF )
 
     def _run(self, sentence):
         def f1(conf): 
            f = 0.
-           for l in conf:
-               prec = conf[l]["tp"]/(conf[l]["tp"] + conf[l]["fn"])   if conf[l]["tp"] + conf[l]["fn"]>0 else float(0.)
-               rec = conf[l]["tp"]/(conf[l]["tp"] + conf[l]["fp"]) if conf[l]["tp"] + conf[l]["fp"]>0 else float(0.)
-               f += 2*prec*rec/(prec+rec) if prec+rec>0 else float(0.)
+           tp = 0.
+           fp = 0.
+           fn = 0.
+           
+           for l in conf: 
+             tp += conf[l]["tp"]
+             fp += conf[l]["fp"]
+             fn += conf[l]["fn"]
+             
+           prec = tp/(tp + fn)   if tp + fn > 0 else float(0.)
+           rec = tp/(tp + fp) if tp + fp > 0 else float(0.)
+           f = 2*prec*rec/(prec+rec) if prec+rec>0 else float(0.)
            return f
 
         output = []
@@ -207,6 +223,7 @@ class MWE(pyvw.SearchTask):
         confusion = defaultdict(lambda:None)       
         prev = BIO('O')   # store the previous prediction
         for n in range(len(sentence)):
+            
             with self.make_example(sentence, n) as ex:  # construct the VW example
                 label  = sentence[n][0]
                 # first, compute the numeric labels for all valid reference actions
@@ -248,11 +265,11 @@ class MWE(pyvw.SearchTask):
                 
                 # update the 'previous' prediction to the current
                 prev  = this
-                # ex.finish()
  
  
         # calculating f-score
         f = f1(confusion)
+        #print f
         loss = 1. - f
         self.sch.loss(loss)
         
@@ -266,85 +283,64 @@ class MWE(pyvw.SearchTask):
         lemma = sentence[n][2]
         pos = sentence[n][3]
         w = sentence[n][1]
-      
+        
         feats = {
              'w': [w],
              'l': [lemma],
-             'p': [pos]
+             'p': [pos], 
         }
       
-        tmp = '<s>'
-        if (w[0].isupper()): 
-           caps = "t" 
-        else: 
-           caps = "f"
-        
-        if w.isdigit(): 
-           digit = "t"  
-        else: 
-           digit = "f"
-      
-        if (n-2) >= 0: 
-           w_p2 = sentence[n-2][1] 
-           pos_p2 = sentence[n-2][2] 
-        else: 
-           w_p2  = tmp
-           pos_p2 = tmp
-      
-        if (n-1) >= 0: 
-           w_p1 = sentence[n-1][1] 
-           pos_p1 = sentence[n-1][2] 
-        else: 
-           w_p1 = tmp
-           pos_p1 = tmp
-      
-        if (n+1) < len(sentence): 
-          w_n1 = sentence[n+1][1] 
-          pos_n1 = sentence[n+1][2]
-          if (sentence[n+1][1][0].isupper()): 
-            caps_n1 = "t"
-          else:  
-            caps_n1 = "f"
-        else: 
-          w_n1 = tmp
-          pos_n1 = tmp
-          caps_n1 = "f"
-        
-        if (n+2) < len(sentence): 
-          w_n2 = sentence[n+2][1]  
-          pos_n2 = sentence[n+2][2] 
-        else: 
-          w_n2 = tmp
-          pos_n2 = tmp
-      
+        # n - 2  features
+        if(n-1)>=0:
+          feats['p'].append(sentence[n-1][3] + "_" + pos)
+          feats['w'].append(sentence[n-1][1] + '_' + w)
+          feats['l'].append(sentence[n-1][2] + '_' + lemma)
+          if (n-2)>=0:
+            feats['p'].append(sentence[n-2][3] + '_' + sentence[n-1][3] + '_' + pos)
+            feats['w'].append(sentence[n-2][1]  + '_' + sentence[n-1][1] + '_' + w)
+            feats['l'].append(sentence[n-2][2]  + '_' + sentence[n-1][2] + '_' + lemma)
 
-        feats['a'] = [pos + '_' + pos_n1] # 'p_p+1'
-        feats['b'] = [pos_p1 + '_' + pos] # 'p-1_p'
-        feats['c'] = [pos_p1 + '_' + pos + '_' + pos_n1] # 'p-1_p_p+1'
-        feats['d'] = [w + '_' + w_n1]  # 'w_w+1'
-        feats['e'] = [w_p1 + '_' + w]  # 'w-1_w'
-        feats['f'] = [w_p1 + '_' + w + '_' + w_n1]  # 'w-1_w_w+1'
-        feats['g'] = [caps]
-        feats['h'] = [caps + '_' + caps_n1]  #'cap_cap+1'
-        feats['j'] = [digit]
+        if(n+1) < len(sentence):
+          feats['p'].append(sentence[n+1][3] + "_" + pos)
+          feats['w'].append(sentence[n+1][1] + '_' + w)
+          feats['l'].append(sentence[n+1][2] + '_' + lemma)
+          if(n+2) < len(sentence):
+            feats['p'].append(pos + '_' + sentence[n+1][3] + '_' + sentence[n+2][3] + '_' + pos)
+            feats['w'].append(w + '_'+ sentence[n+1][1]  + '_' + sentence[n+2][1] + '_' + w)
+            feats['l'].append(lemma + '_' + sentence[n+1][2]  + '_' + sentence[n+2][2] + '_' + lemma)
 
-        # wordnet features: the supersense category of the first WordNet sense of the current word.
-        feats['ss'] = [top_hypernym(lemma, pos)]
-      
-        # listed as mwe in list? 
-        # look ahead and check for exact MWE match of lengths [2..9]
+        #distance from parent
+   
+   
+   
+        #wordnet, mwe features
         def mwe_test():
             for l in range(2, 1 + min(9, len(sentence) - n)):
                 w = tuple([sentence[i][2] for i in range(n, n + l)])
                 if w in mwes: return True
             return False
-        feats['m'] = [mwe_test()]
 
+        feats['m'] = [mwe_test()]                
+        
+        #wordnet, supersense features
+        feats['ss'] = [top_hypernym(lemma, pos)]
       
+      
+        # misc features
+        if w[0].isupper(): 
+         feats['g'] = ["caps"]
+         if n+1 < len(sentence) and sentence[n+1][1][0].isupper():
+          feats['g'].append("caps_caps+1")
+         if n-1 > 0 and sentence[n-1][1][0].isupper():
+          feats['g'].append("caps_caps-1")
+
+        if w.isdigit(): 
+         feats['i'] = ["num"]
+        
+
         return self.example(feats)
 
-           
-
+          
 def make_data(BIO,filename):
     data = []
     sentence = []
@@ -357,7 +353,7 @@ def make_data(BIO,filename):
             sentence = []
         else:
             [offset,word,lemma,pos,mwe,parent,strength,ssense,sid] = l.split('\t')
-            sentence.append((BIO(mwe, label=ssense),word,lemma,pos))
+            sentence.append((BIO(mwe,ssense),word,lemma,pos,mwe,parent,strength,ssense,sid))
     return data
 
 
@@ -373,16 +369,20 @@ def make_test_data(BIO,filename):
             sentence = []
         else:
             [offset,word,lemma,pos] = l.split('\t')
-            sentence.append(offset,word,lemma,pos,'','','','','')
+            sentence.append((offset,word,lemma,pos,'','','','',''))
     return data
 
 
 
 if __name__ == "__main__":
-    # input/output files
-    trainfilename='dimsum16.p3.train.contiguous'
-    testfilename='dimsum16.p3.test.contiguous'
-    outfilename='dimsum16.p3.test.contiguous.out'
+ 
+    if(len(sys.argv) > 1): 
+      trainfilename, testfilename, outfilename=sys.argv[1:]
+    else: 
+      # input/output files
+      trainfilename='dimsum16.p3.train.contiguous'
+      testfilename='dimsum16.p3.test.contiguous'
+      outfilename='dimsum16.p3.test.contiguous.out'
 
     # read in some examples to be used as training/dev set
     train_data = make_data(BIO,trainfilename)
@@ -390,10 +390,6 @@ if __name__ == "__main__":
     # initialize VW and sequence labeler as learning to search
     vw = pyvw.vw(search=3, quiet=True, search_task='hook', ring_size=1024, \
                  search_rollin='learn', search_rollout='none')
-    
-    # TODO: For ldf version ....           
-    # vw = pyvw.vw(search=0, csoaa_ldf=m, quiet=True, search_task='hook', ring_size=1024, \
- #               search_rollin='learn', search_rollout='ref')  
     
 
     # tell VW to construct your search task object
@@ -412,61 +408,32 @@ if __name__ == "__main__":
     print 'predicting!' 
     hamming_loss, total_words = 0,0
     for n in range(N, len(train_data)):
-        truth = [label for label,word,lemma,pos in train_data[n]]
-        pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for label,word,lemma,pos in train_data[n]] )
-        
-        
-        def print_joint(bio): 
-         if bio is None: 
-           "I'm none"
-         else: 
-          print bio.bio + '-' + bio.label
-          bio.bio + '-' + bio.label
-        
-        for x in train_data[n]: 
-           print x
-        
-        print 'predicted:', '\t'.join(map(print_joint, pred))
-        # print '    truth:', '\t'.join(map(print_joint, truth))
+        truth = [label for label,word,lemma,pos,mwe,parent,strength,ssense,sid in train_data[n]]
+        pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for label,word,lemma,pos,mwe,parent,strength,ssense,sid in train_data[n]] )
 
-        
-        for i,t in enumerate(truth):
-            print pred.__class__.__name__
-            print i
-            print pred[i]
-            print t
-
+        for i,t in enumerate(truth):      
             if t != pred[i]:
                 hamming_loss += 1
             total_words += 1
     
     print 'total hamming loss on dev set:', hamming_loss, '/', total_words
 
-    # In Part II, you will have to output predictions on the test set.
-    # test_data = make_test_data(BIO,testfilename)
-    # for n in range(N, len(test_data)):
-    #     #make predictions for current sentence
-    #     pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for label,word,lemma,pos in test_data[n]] )
-    #     print pred
-        
-        
-    #print to output file  
-    # In Part II, you will have to output predictions on the test set.
-    test_data = make_test_data(BIO,testfilename)
-    for n in range(N, len(test_data)):
-        
-        pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for offset,word,lemma,pos,mwe,parent,strength,ssense,sid in test_data[n]] )
 
-        with open(outfilename, "a") as myfile:
-         for i,label in enumerate(pred):   #pred is a list of labels (i.e. strings) objects (i is index and t is label )
-           mwe, ssense = label.split("-")
-           test_data[n][i][5] = mwe
-           test_data[n][i][8] = ssense
-           out = test_data[n][i].join('\t')
-           myfile.write(out)
-           
-         myfile.write('\n')  # adding line break at end of each sentence
-           
-           
-           
-           
+    # In Part II, you will have to output predictions on the test set.
+    print "Testing!"
+    test_data = make_test_data(BIO,testfilename)
+    for n in range(0, len(test_data)):
+
+     pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos,mwe,parent,strength,ssense,sid,offset) for offset,word,lemma,pos,mwe,parent,strength,ssense,sid in test_data[n]] )
+     
+
+     f = open(outfilename, 'a+')
+     for i,b in enumerate(pred):   #pred is a list of labels (i.e. strings) objects (i is index and t is label )
+       t = list(test_data[n][i])
+       t[5] = b.bio
+       t[8] = b.label
+       out = '\t'.join(t) 
+       f.write(out)
+       f.write('\n')
+        
+     f.write('\n')  # adding line break at end of each sentence
