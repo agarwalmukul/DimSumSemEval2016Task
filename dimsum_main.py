@@ -385,8 +385,8 @@ if __name__ == "__main__":
           print bio.bio + '-' + bio.label
           bio.bio + '-' + bio.label
         
-        for i in len(train_data[n]): 
-           print train_data[n][i]
+        for x in train_data[n]: 
+           print x
         
         print 'predicted:', '\t'.join(map(print_joint, pred))
         # print '    truth:', '\t'.join(map(print_joint, truth))
