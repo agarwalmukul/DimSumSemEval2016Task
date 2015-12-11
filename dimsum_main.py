@@ -283,8 +283,8 @@ class MWE(pyvw.SearchTask):
         lemma = sentence[n][2]
         pos = sentence[n][3]
         w = sentence[n][1]
-        label = str(sentence[n][0]) if sentence[n][0]!=Null
-        parent = str(sentence[n][5]) if sentence[n][5]!=Null
+        label = str(sentence[n][0])
+        parent = str(sentence[n][5])
         #print label
         #print parent
         
