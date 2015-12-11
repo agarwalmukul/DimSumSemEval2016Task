@@ -57,8 +57,8 @@ def top_hypernym(word, pos):
     
     if synsets:
         hypernyms = synsets[0].root_hypernyms()
-        return hypernyms[0].name() if hypernyms else word
-    else: return word
+        return hypernyms[0].name() if hypernyms else pos
+    else: return pos
 
 # convert file to set of words, e.g. "make_a_point" -> ("make", "a", "point")
 def file_2_phrases(filename):
