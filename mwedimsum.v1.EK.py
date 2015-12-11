@@ -1,4 +1,5 @@
 import pyvw
+from nltk.corpus import wordnet as wn
 
 valid_labels = {'n.act': 0,
 'n.animal': 1,
@@ -42,6 +43,22 @@ valid_labels = {'n.act': 0,
 'v.stative': 39,
 'v.weather': 40}
 valid_labels_rev = { v:k for k,v in valid_labels.iteritems() }
+
+
+# String POS -> String
+# Return the name of the word's supersense, or the word itself if can't find
+def top_hypernym(word, pos):
+    wn_pos = {"NOUN": wn.NOUN,
+              "VERB": wn.VERB,
+              "ADJ" : wn.ADJ,
+              "ADV" : wn.ADV}.get(pos)
+    
+    synsets = wn.synsets(word, pos = wn_pos)
+    
+    if synsets:
+        hypernyms = synsets[0].root_hypernyms()
+        return hypernyms[0].name() if hypernyms else word
+    else: return word
 
 # convert file to set of words, e.g. "make_a_point" -> ("make", "a", "point")
 def file_2_phrases(filename):
@@ -212,11 +229,13 @@ class MWE(pyvw.SearchTask):
           w_n2 = tmp
           pos_n2 = tmp
       
-         # wordnet features:  the supersense category of the first WordNet sense of the current word. (WordNet senses are ordered roughly by frequency.)
+        # wordnet features:  the supersense category of the first WordNet sense of the current word.
+        # (WordNet senses are ordered roughly by frequency.)
+        feats['ss'] = [top_hypernym(lemma, pos)]
       
-         # suffixes: ing 
+        # suffixes: ing 
       
-         # has-supersense
+        # has-supersense
       
         # listed as mwe in list? 
         # look ahead and check for exact MWE match of lengths [2..9]
