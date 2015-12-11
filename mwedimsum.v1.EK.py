@@ -43,6 +43,16 @@ valid_labels = {'n.act': 0,
 'v.weather': 40}
 valid_labels_rev = { v:k for k,v in valid_labels.iteritems() }
 
+# convert file to set of words, e.g. "make_a_point" -> ("make", "a", "point")
+def file_2_phrases(filename):
+    with open(filename) as f:
+        return {tuple(l.rstrip('\n').split('_')) for l in f}
+
+mwe_nouns = file_2_phrases('nouns_mwes_in_wordnet3.1.txt')
+mwe_verbs = file_2_phrases('verbs_mwes_in_wordnet3.1.txt') 
+mwes = mwe_nouns | mwe_verbs
+print "done loading %d noun and %s verb MWEs" % (len(mwe_nouns), len(mwe_verbs))
+
 class BIO:
     # construct a BIO object using a bio type ('O', 'B' or 'I') and a
     # optionally a label (that can be used to capture the supersense tag). 
@@ -208,7 +218,15 @@ class MWE(pyvw.SearchTask):
       
          # has-supersense
       
-         # listed as mwe in list? 
+        # listed as mwe in list? 
+        # look ahead and check for exact MWE match of lengths [2..9]
+        def mwe_test():
+            for l in range(2, 1 + min(9, len(sentence) - n)):
+                w = tuple([sentence[i][2] for i in range(n, n + l)])
+                if w in mwes: return True
+            return False
+
+        feats['m'] = [mwe_test()]
       
          #
         feats['a'] = [pos + '_' + pos_n1] # 'p_p+1'
@@ -220,6 +238,8 @@ class MWE(pyvw.SearchTask):
         feats['g'] = [caps]
         feats['h'] = [caps + '_' + caps_n1]  #'cap_cap+1'
         feats['j'] = [digit]
+
+
       
         return self.example(feats)
 
