@@ -208,7 +208,6 @@ class MWE(pyvw.SearchTask):
                 "NOUN": len(mapping_nouns.get(word, ())),
                 "VERB": len(mapping_verbs.get(word, ()))
             }.get(pos, 0)
-            print extra
 
             with self.make_example(word, lemma, pos, extra) as ex:  # construct the VW example
                 # first, compute the numeric labels for all valid reference actions
