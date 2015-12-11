@@ -1,0 +1,9 @@
+The features we included:
+* The current part of speech.
+* The current lemma.
+* Whether the current word is capitalized.
+* The previous 2 words (forming a tri-gram model).
+* Boolean indicating whether the current word, peeking ahead, is an exact match of any MWE in the provided MWE list.
+* Supersense of the current word.
+
+
