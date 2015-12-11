@@ -6,4 +6,4 @@ The features we included:
 * Boolean indicating whether the current word, peeking ahead, is an exact match of any MWE in the provided MWE list.
 * Supersense of the current word.
 
-
+We did not attempt the full task.
