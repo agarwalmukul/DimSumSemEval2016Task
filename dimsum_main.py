@@ -53,9 +53,8 @@ class BIO:
     # construct a BIO object using a bio type ('O', 'B' or 'I') and a
     # optionally a label (that can be used to capture the supersense tag). 
     # this additionally computes a numeric_label to be used by vw
-    def __init__(self, bio, label=None, pos=None, word=None):
-        bio_valid = ['B']
-        if bio != 'O' and bio != 'B' and bio != 'I' and bio != 'b' and bio != 'o' and bio != 'i':
+    def __init__(self, bio, label=''):
+        if bio != 'O' and bio != 'B' and bio != 'I':
             raise TypeError
         self.bio = bio
         self.label = label          # the label will only be needed for supersenses
@@ -65,12 +64,6 @@ class BIO:
                 self.numeric_label = 2 
             elif self.bio == 'I':
                 self.numeric_label = 3 
-            elif self.bio =='b':
-                self.numeric_label = 4
-            elif self.bio == 'i': 
-                self.numeric_label = 5
-            elif self.bio == 'o': 
-                self.numeric_label = 6
         else:    #adding supersenses and supersense bio combos
             if self.bio == 'O': 
                 self.numeric_label = valid_labels[self.label] + 100
@@ -78,12 +71,6 @@ class BIO:
                 self.numeric_label = valid_labels[self.label] + 200  
             elif self.bio == 'I':
                 self.numeric_label = valid_labels[self.label] + 300
-            elif self.bio == 'o': 
-                self.numeric_label = valid_labels[self.label] + 400 
-            elif self.bio == 'b': 
-                self.numeric_label = valid_labels[self.label] + 500  
-            else: 
-                self.numeric_label = valid_labels[self.label] + 600  
             
                    
     # a.can_follow(b) returns true if:
@@ -99,64 +86,30 @@ class BIO:
             
     # given a label, produce a list of all valid BIO items that can
     # come next. 
-    def valid_next(self, task=None):    
+    def valid_next(self):    
          valid = []
-         
-         if task == "MWE-SS": 
-           if self.bio == 'B': 
-             valid.append(BIO('I', label=None))
-           if self.bio == 'I':
-             valid.append(BIO('O', label=None)) 
-             valid.append(BIO('I', label=None)) 
-             valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
-             for i in valid_labels:
-               valid.append(BIO('B', label=i))
-               valid.append(BIO('O', label=i))
-           if self.bio == 'O': 
-             valid.append(BIO('O', label=None)) 
-             valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
-             for i in valid_labels: 
-               valid.append(BIO('B', label=i))
-               valid.append(BIO('O', label=i)) 
-               
-               
-         if task == "MWE-GAPPY":
-           if self.bio == 'B':
-             valid.append(BIO('I', label=None))   
-           if self.bio == 'I':
-             valid.append(BIO('O', label=None)) 
-             valid.append(BIO('I', label=None)) 
-             valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
-             for i in valid_labels: 
-               valid.append(BIO('B', label=i))
-               valid.append(BIO('O', label=i))
-           if self.bio == 'O': 
-             valid.append(BIO('O', label=None)) 
-             valid.append(BIO('B', label=None))  #TODO: is this true or must mwe be a supersense??
-             for i in valid_labels: 
-               valid.append(BIO('B', label=i))
-               valid.append(BIO('O', label=i))
-           if self.bio == 'b': 
-             valid.append(BIO('i', label=None)) 
-           if self.bio == 'i':
-             valid.append(BIO('I', label=None)) 
-             valid.append(BIO('o', label=None)) 
-             valid.append(BIO('i', label=None)) 
-             for i in valid_labels: 
-               valid.append(BIO('o', label=i))
-           if self.bio == 'o': 
-             valid.append(BIO('I', label=None)) 
-             valid.append(BIO('o', label=None)) 
-             valid.append(BIO('i', label=None)) 
-             valid.append(BIO('b', label=None)) 
-             for i in valid_labels: 
-               valid.append(BIO('b', label=i))
-               valid.append(BIO('o', label=i))
+         if self.bio == 'B': 
+           valid.append(BIO('I'))
+         if self.bio == 'I':
+           valid.append(BIO('O')) 
+           valid.append(BIO('I')) 
+           valid.append(BIO('B'))  
+           for i in valid_labels:
+             valid.append(BIO('B', label=i))
+             valid.append(BIO('O', label=i))
+         if self.bio == 'O': 
+           valid.append(BIO('O')) 
+           valid.append(BIO('B'))  
+           for i in valid_labels: 
+             valid.append(BIO('B', label=i))
+             valid.append(BIO('O', label=i)) 
+
          return valid
 
     # produce a human-readable string
     def __str__( self): return self.bio #return 'O' if self.bio == 'O' else (self.bio + '-' + self.label)
     def __repr__(self): return self.__str__()
+
 
     # compute equality
     def __eq__(self, other):
@@ -175,12 +128,6 @@ def numeric_label_to_BIO(num):
             return BIO('B')
         elif num == 3:
             return BIO('I')
-        elif num == 4: 
-            return BIO('b')
-        elif num == 5: 
-            return BIO('i')
-        elif num == 6: 
-            return BIO('o')
     elif num < 200: # O
         ss = valid_labels_rev[num - 100]
         return BIO('O', ss)
@@ -190,15 +137,7 @@ def numeric_label_to_BIO(num):
     elif num < 400:  # I
         ss = valid_labels_rev[num - 300]
         return BIO('I', ss)
-    elif num < 500: # b
-        ss = valid_labels_rev[num - 400]
-        return BIO('b', ss)
-    elif num < 600:  # i
-        ss = valid_labels_rev[num - 500]
-        return BIO('i', ss)
-    else: # o
-        ss = valid_labels_rev[num - 600]
-        return BIO('o', ss)
+
 
         
 # given a previous PREDICTED label (prev), which may be incorrect; and
@@ -207,76 +146,16 @@ def numeric_label_to_BIO(num):
 # is O or B, then regardless of what prev is the correct thing to do
 # is [truth]. the most important thing is to handle the case when, for
 # instance, truth is I but prev is neither I nor B
-def compute_reference(prev, truth, task=None): 
+def compute_reference(prev, truth): 
     ref = []
-    if task == "MWE": 
-        if (truth.bio == 'I' and prev.bio == 'O'):
-          ref = [prev]
-        else: 
-          ref = [truth]
-     
-    elif task == "MWE-SS": 
-        if (truth.bio == 'O' or truth.bio == 'B'):
-            ref.append(BIO(truth.bio, label=truth.label))
-        elif (truth.bio == 'I' and prev.bio == 'O'):
-            ref.append(BIO('O', label=None))
-        else:
-            ref.append(BIO(truth.bio, label=None))
-         
-    elif task == "MWE-GAPPY":
-        
-        # TODO: make decision on how to handle wrong predictions...
-        if (truth.bio == 'I' and prev.bio == 'O'):      # OI
-            ref.append(BIO('O', label=None))
-        
-        elif (truth.bio == 'B' and prev.bio == 'b'):    # bB
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'B' and prev.bio == 'o'):    # oB
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'B' and prev.bio == 'i'):    # iB
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'I' and prev.bio == 'b'):    # bI
-            ref.append(BIO(truth.bio, label=None))
-        
-        elif (truth.bio == 'O' and prev.bio == 'B'):    # BO 
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'O' and prev.bio == 'b'): 
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'O' and prev.bio == 'i'): 
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'O' and prev.bio == 'o'): 
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'b' and prev.bio == 'B'): 
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'b' and prev.bio == 'O'): 
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        elif (truth.bio == 'i' and prev.bio == 'O'): 
-            ref.append(BIO(truth.bio, label=None))
-        
-        elif (truth.bio == 'i' and prev.bio == 'B'): 
-            ref.append(BIO(truth.bio, label=None))
-        
-        elif (truth.bio == 'i' and prev.bio == 'I'): 
-            ref.append(BIO(truth.bio, label=None))
-        
-        elif (truth.bio == 'o' and prev.bio == 'O'): 
-            ref.append(BIO(truth.bio, label=truth.label))
-        
-        # assuming all invalid prev. pred are handled above...  
-        elif (truth.bio == 'O' or truth.bio == 'B' or truth.bio == 'o' or truth.bio == 'b'): 
-            ref.append(BIO(truth.bio, label=truth.label))
-        elif (truth.bio == 'I'): 
-            ref.append(BIO(truth.bio, label=None))
-          
+
+    if (truth.bio == 'O' or truth.bio == 'B'):
+        ref.append(BIO(truth.bio, label=truth.label))
+    elif (truth.bio == 'I' and prev.bio == 'O'):
+        ref.append(BIO('O'))
+    else:
+        ref.append(BIO(truth.bio))
+           
     return ref
 
 
@@ -293,9 +172,9 @@ class MWE(pyvw.SearchTask):
         def f1(conf): 
            f = 0.
            for l in conf:
-               prec = conf[l]["tp"]/(conf[l]["tp"] + conf[l]["fn"])   if conf[l]["tp"] + conf[l]["fn"]>0 else float(0)
-               rec = conf[l]["tp"]/(conf[l]["tp"] + conf[l]["fp"]) if conf[l]["tp"] + conf[l]["fp"]>0 else float(0)
-               f += 2*prec*rec/(prec+rec) if prec+rec>0 else float(0)
+               prec = conf[l]["tp"]/(conf[l]["tp"] + conf[l]["fn"])   if conf[l]["tp"] + conf[l]["fn"]>0 else float(0.)
+               rec = conf[l]["tp"]/(conf[l]["tp"] + conf[l]["fp"]) if conf[l]["tp"] + conf[l]["fp"]>0 else float(0.)
+               f += 2*prec*rec/(prec+rec) if prec+rec>0 else float(0.)
            return f
 
         output = []
@@ -307,12 +186,12 @@ class MWE(pyvw.SearchTask):
                 label  = sentence[n][0]
                 # first, compute the numeric labels for all valid reference actions
                 
-                refs  = [ bio.numeric_label for bio in compute_reference(prev, label, task="MWE-SS") ]    # FIXME: if you want to do MWE-GAPPY
+                refs  = [ bio.numeric_label for bio in compute_reference(prev, label) ]   
                 
                 # next, because some actions are invalid based on the
                 # previous decision, we need to compute a list of
                 # valid actions available at this point
-                valid = [ bio.numeric_label for bio in prev.valid_next(task="MWE-SS") ] # FIXME: if you want to do MWE-GAPPY
+                valid = [ bio.numeric_label for bio in prev.valid_next() ] 
                 
                 
                 # make a prediction
@@ -344,13 +223,14 @@ class MWE(pyvw.SearchTask):
                 
                 # update the 'previous' prediction to the current
                 prev  = this
+                # ex.finish()
  
-        # calculating joint f-measure
+ 
+        # calculating f-score
         f = f1(confusion)
-        print f
         loss = 1. - f
         self.sch.loss(loss)
-                
+        
         # return the list of predictions as BIO labels
         return output
 
@@ -412,14 +292,6 @@ class MWE(pyvw.SearchTask):
           w_n2 = tmp
           pos_n2 = tmp
       
-         # wordnet features:  the supersense category of the first WordNet sense of the current word. (WordNet senses are ordered roughly by frequency.)
-      
-         # suffixes: ing 
-      
-         # has-supersense
-      
-         # listed as mwe in list? 
-      
 
         feats['a'] = [pos + '_' + pos_n1] # 'p_p+1'
         feats['b'] = [pos_p1 + '_' + pos] # 'p-1_p'
@@ -449,6 +321,23 @@ def make_data(BIO,filename):
             [offset,word,lemma,pos,mwe,parent,strength,ssense,sid] = l.split('\t')
             sentence.append((BIO(mwe, label=ssense),word,lemma,pos))
     return data
+
+
+def make_test_data(BIO,filename):
+    data = []
+    sentence = []
+    f = open(filename,'r')
+    for l in f:
+        l = l.strip()
+        # at end of sentence
+        if l == "":
+            data.append(sentence)
+            sentence = []
+        else:
+            [offset,word,lemma,pos] = l.split('\t')
+            sentence.append(offset,word,lemma,pos,'','','','','')
+    return data
+
 
 
 if __name__ == "__main__":
@@ -487,22 +376,59 @@ if __name__ == "__main__":
     for n in range(N, len(train_data)):
         truth = [label for label,word,lemma,pos in train_data[n]]
         pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for label,word,lemma,pos in train_data[n]] )
+        
+        
+        def print_joint(bio): 
+         if None: 
+           "I'm none + " + bio.label
+         else: 
+          print bio.bio + '-' + bio.label
+          bio.bio + '-' + bio.label
+        
+        for i in len(train_data[n]): 
+           print train_data[n][i]
+        
+        print 'predicted:', '\t'.join(map(print_joint, pred))
+        # print '    truth:', '\t'.join(map(print_joint, truth))
+
+        
         for i,t in enumerate(truth):
+            print pred.__class__.__name__
+            print i
+            print pred[i]
+            print t
+
             if t != pred[i]:
                 hamming_loss += 1
             total_words += 1
-    #    print 'predicted:', '\t'.join(map(str, pred))
-    #    print '    truth:', '\t'.join(map(str, truth))
-    #    print ''
+    
     print 'total hamming loss on dev set:', hamming_loss, '/', total_words
 
     # In Part II, you will have to output predictions on the test set.
-    test_data = make_data(BIO,testfilename)
+    # test_data = make_test_data(BIO,testfilename)
+    # for n in range(N, len(test_data)):
+    #     #make predictions for current sentence
+    #     pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for label,word,lemma,pos in test_data[n]] )
+    #     print pred
+        
+        
+    #print to output file  
+    # In Part II, you will have to output predictions on the test set.
+    test_data = make_test_data(BIO,testfilename)
     for n in range(N, len(test_data)):
-        #make predictions for current sentence
-        pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for label,word,lemma,pos in test_data[n]] )
-        print pred
         
-        
-    #print to output file   
-        
+        pred  = sequenceLabeler.predict( [(BIO('O'),word,lemma,pos) for offset,word,lemma,pos,mwe,parent,strength,ssense,sid in test_data[n]] )
+
+        with open(outfilename, "a") as myfile:
+         for i,label in enumerate(pred):   #pred is a list of labels (i.e. strings) objects (i is index and t is label )
+           mwe, ssense = label.split("-")
+           test_data[n][i][5] = mwe
+           test_data[n][i][8] = ssense
+           out = test_data[n][i].join('\t')
+           myfile.write(out)
+           
+         myfile.write('\n')  # adding line break at end of each sentence
+           
+           
+           
+           
