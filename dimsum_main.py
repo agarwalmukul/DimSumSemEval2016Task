@@ -283,8 +283,8 @@ class MWE(pyvw.SearchTask):
         lemma = sentence[n][2]
         pos = sentence[n][3]
         w = sentence[n][1]
-        label = str(sentence[n][0])
-        parent = str(sentence[n][5])
+        #label = str(sentence[n][0])
+        #parent = str(sentence[n][5])
         #print label
         #print parent
         
@@ -314,9 +314,9 @@ class MWE(pyvw.SearchTask):
             feats['l'].append(lemma + '_' + sentence[n+1][2]  + '_' + sentence[n+2][2])
 
         #distance from parent
-        if(parent!='' and label!=''):
+        #if(parent!='' and label!=''):
           #distance = int(parent)- int(label)
-          feats['w'].append( w + '_'  +str(sentence[int(parent)][2]) + '_' +str(sentence[int(parent)][3]) )
+        #  feats['w'].append( w + '_'  +str(sentence[int(parent)][2]) + '_' +str(sentence[int(parent)][3]) )
           #feats['w'].append(int(parent)-int(label) + '_' + sentence[int(parent)][2] + '_' +sentence[int(parent)][3] )
    
    
